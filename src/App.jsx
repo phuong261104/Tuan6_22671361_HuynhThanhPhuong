@@ -1,12 +1,11 @@
-import { useEffect, useState } from "react";
-import Ex1 from "./component/ex1";
+import Counter from "./component/Counter";
+import InputRef from "./component/InputRef";
 
 function App() {
-
-
   return (
     <>
-      <Ex1 />
+      {/* <Counter /> */}
+      <InputRef />
     </>
   );
 }
