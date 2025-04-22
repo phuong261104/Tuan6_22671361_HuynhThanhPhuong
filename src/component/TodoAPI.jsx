@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
+const API_URL = 'http://localhost:3001/todos';
+
 const TodoAPI = () => {
     const ref = useRef(null);
     const [todos, setTodos] = useState([]);
@@ -7,46 +9,60 @@ const TodoAPI = () => {
     const [editText, setEditText] = useState("");
 
     useEffect(() => {
-        fetch('https://67cab39c102d684575c665a5.mockapi.io/Todo')
-            .then(response => response.json())
-            .then(data => {
-                setTodos(data)
-                console.log(data)
-            })
+        fetch(API_URL)
+            .then(res => res.json())
+            .then(data => setTodos(data))
             .catch(error => console.error('Lỗi:', error));
     }, []);
 
-    function handleAdd() {
+    const handleAdd = async () => {
         const name = ref.current.value.trim();
-        const newToDo = {
-            id: randomIntFromInterval(1, 1000000),
-            name: name
-        }
+        if (!name) return;
+        const newTodo = { name };
 
-        setTodos([...todoList, newToDo])
-    }
+        const res = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newTodo)
+        });
+        const created = await res.json();
+        setTodos([...todos, created]);
+        ref.current.value = '';
+    };
 
-    function handleDelete(index) {
-        const newTodo = todoList.filter(item => item.id !== id)
-        setTodos(newTodo)
-    }
+    const handleDelete = async (id) => {
+        await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        setTodos(todos.filter(item => item.id !== id));
+    };
 
-    function handleEdit(index) {
+    const handleEdit = (index) => {
         setEditingIndex(index);
         setEditText(todos[index].name);
-    }
+    };
 
-    function handleUpdate() {
-        if (editText.trim()) {
-            const updatedTodos = [...todos];
-            updatedTodos[editingIndex] = editText;
-            setTodos(updatedTodos);
-            setEditingIndex(null);
-        }
-    }
+    const handleUpdate = async () => {
+        if (!editText.trim()) return;
+
+        const todo = todos[editingIndex];
+        const updated = { ...todo, name: editText };
+
+        const res = await fetch(`${API_URL}/${todo.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updated)
+        });
+
+        const result = await res.json();
+        const updatedTodos = [...todos];
+        updatedTodos[editingIndex] = result;
+
+        setTodos(updatedTodos);
+        setEditingIndex(null);
+        setEditText('');
+    };
 
     return (
-        <div className="flex flex-col items-center justify-center mt-5 bg-gray-100">
+        <div className="flex flex-col items-center justify-center mt-5 bg-gray-100 min-h-screen">
             <div className="bg-white p-6 rounded-2xl shadow-lg text-center w-96">
                 <h2 className="text-xl font-semibold mb-4">📌 Danh sách công việc</h2>
 
@@ -100,7 +116,7 @@ const TodoAPI = () => {
                                 )}
 
                                 <button
-                                    onClick={() => handleDelete(index)}
+                                    onClick={() => handleDelete(todo.id)}
                                     className="px-2 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
                                 >
                                     🗑
